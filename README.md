@@ -1,5 +1,7 @@
 # MondrianAlgorithm2
 
+- Oscar Thomsen
+
 The stategy used for this algorithm is to split the image into a given number of smaller regions then for each region look at each pixel and calculate either the mean or the median (more about that further below), the calculated value is then applied to each pixel in that region.
 
 Once that is done for all the regions then the ones that are the same color are merged to create larger homogeneous regions.
@@ -17,4 +19,3 @@ Tasks left to do:
 - Make the program work for all image sizes
 
 
-- Oscar Thomsen

@@ -19,3 +19,17 @@ Tasks left to do:
 - Make the program work for all image sizes
 
 
+## Some examples : 
+
+Original Image : 
+![alt text](https://github.com/ProjetMondrian/MondrianAlgorithm2/blob/master/lena.jpg)
+
+Result : 
+![alt text](https://github.com/ProjetMondrian/MondrianAlgorithm2/blob/master/lena_temp_output.png)
+
+
+Original Image :
+![alt text](https://github.com/ProjetMondrian/MondrianAlgorithm2/blob/master/white_background_input.jpg)
+
+Result :
+![alt text](https://github.com/ProjetMondrian/MondrianAlgorithm2/blob/master/white_background_temp_output.png)

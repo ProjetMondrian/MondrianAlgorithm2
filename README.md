@@ -29,6 +29,11 @@ Result :
 
 ![alt text](https://github.com/ProjetMondrian/MondrianAlgorithm2/blob/master/lena_temp_output.png)
 
+With merging but also with non-rectangular shapes (for now):
+
+![alt text](https://github.com/ProjetMondrian/MondrianAlgorithm2/blob/master/lena_output.png)
+
+(also here the colors are somewhat normalized otherwise merging changes almost nothing since there would be too many similar but slightly different colors that would thus not be merged into one bigger homogeneous region)
 
 
 Original Image :
@@ -38,3 +43,7 @@ Original Image :
 Result :
 
 ![alt text](https://github.com/ProjetMondrian/MondrianAlgorithm2/blob/master/white_background_temp_output.png)
+
+With merging but also with non-rectangular shapes (for now):
+
+![alt text](https://github.com/ProjetMondrian/MondrianAlgorithm2/blob/master/white_background_merged_output.png)

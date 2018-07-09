@@ -3,7 +3,21 @@ import operator
 import time
 from PIL import  Image, ImageDraw
 
-im = Image.open("input.jpg")
+## Choose one from the list of available filenames:
+#filename = "bwlena.jpg"
+#filename = "falcone.jpg"
+#filename = "k.jpg"
+filename = "lena.jpg"
+#filename = "resized_falcone.jpg"
+#filename = "white_background_input.jpg"
+
+im = Image.open(filename)
+
+desiredSize = (512, 512)
+if (im.size != desiredSize):
+    im = im.resize(desiredSize)
+#im.save("resized_input.jpg")
+
 px = im.load()
 
 
@@ -16,12 +30,18 @@ def drawGrid(draw,points,coeff2):
     return
 
 def undrawGrid(draw,points,coeff2,newColorMatrix):
+    for j in range(0,coeff2-1):
+        if (tuple(map(lambda x:int(x/10),newColorMatrix[0][j])) == tuple(map(lambda x:int(x/10),newColorMatrix[0][j+1]))):
+            draw.line((points*0+2, points*(j+1), points*(0+1)-2, points*(j+1)), fill=newColorMatrix[0][j], width=3)
     for i in range(0,coeff2-1):
-        for j in range(0,coeff2-1):
-            if (newColorMatrix[i][j] == newColorMatrix[i][j+1]):
-                draw.line((points*i, points*j, points*i, points*(j+1)), fill=newColorMatrix[i][j], width=3)
-            if (newColorMatrix[i][j] == newColorMatrix[i+1][j]):
-                draw.line((points*i, points*j, points*(i+1), points*j), fill=newColorMatrix[i][j], width=3)
+        if (tuple(map(lambda x:int(x/10),newColorMatrix[i][0])) == tuple(map(lambda x:int(x/10),newColorMatrix[i+1][0]))):
+            draw.line((points*(i+1), points*0, points*(i+1), points*1-2), fill=newColorMatrix[i][0], width=3)
+    for i in range(1,coeff2):
+        for j in range(1,coeff2):
+            if (tuple(map(lambda x:int(x/10),newColorMatrix[i][j])) == tuple(map(lambda x:int(x/10),newColorMatrix[i][j-1]))):
+                draw.line((points*i+2, points*j, points*(i+1)-2, points*j), fill=newColorMatrix[i][j], width=3)
+            if (tuple(map(lambda x:int(x/10),newColorMatrix[i][j])) == tuple(map(lambda x:int(x/10),newColorMatrix[i-1][j]))):
+                draw.line((points*i, points*j+2, points*i, points*(j+1)-2), fill=newColorMatrix[i][j], width=3)
 
 def drawRectangles(draw,points,coeff2):
     while(xy2[1][1]<=im.size[1]):
@@ -33,6 +53,29 @@ def drawRectangles(draw,points,coeff2):
         xy2[0] = tuple(map(sum,zip(xy2[0],increment2)))
         xy2[1] = tuple(map(sum,zip(xy2[1],increment2)))
 
+def removeDots(image,points,coeff2,newColorMatrix):
+    for i in range(1,coeff2):
+        if (px[3,points*i] != (0,0,0)):
+            im.putpixel((0,points*i-1),newColorMatrix[0][i-1])
+            im.putpixel((1,points*i-1),newColorMatrix[0][i-1])
+            im.putpixel((0,points*i),newColorMatrix[0][i])
+            im.putpixel((1,points*i),newColorMatrix[0][i])
+            im.putpixel((0,points*i+1),newColorMatrix[0][i])
+            im.putpixel((1,points*i+1),newColorMatrix[0][i])
+
+    for i in range(1,coeff2):
+        for j in range(1,coeff2):
+            if (px[points*i-2,points*j] != (0,0,0) and px[points*i+2,points*j] != (0,0,0) and px[points*i,points*j-2] != (0,0,0) and px[points*i,points*j+2] != (0,0,0)):
+                im.putpixel((points*i-1,points*j-1),newColorMatrix[i][j])
+                im.putpixel((points*i,points*j-1),newColorMatrix[i][j])
+                im.putpixel((points*i+1,points*j-1),newColorMatrix[i][j])
+                im.putpixel((points*i-1,points*j),newColorMatrix[i][j])
+                im.putpixel((points*i,points*j),newColorMatrix[i][j])
+                im.putpixel((points*i+1,points*j),newColorMatrix[i][j])
+                im.putpixel((points*i-1,points*j+1),newColorMatrix[i][j])
+                im.putpixel((points*i,points*j+1),newColorMatrix[i][j])
+                im.putpixel((points*i+1,points*j+1),newColorMatrix[i][j])
+
 def findMostCommon(L):
     currentCount = 0
     for i in L:
@@ -40,6 +83,12 @@ def findMostCommon(L):
             currentCount = L.count(i)
             mostCommonColor = (i)
     return mostCommonColor
+
+def normalizeColors(newColorMatrix):
+    for i in range(0,coeff2):
+        for j in range(0,coeff2):
+            newColorMatrix[i][j] = tuple(map(lambda x:int(x/10)*10,newColorMatrix[i][j]))
+
 
 ## For now the program only uses 512 by 512 pixels images for simplicity, will work for all images later
 ## The image is divided in 16x16 squares of 32x32 pixels each
@@ -68,6 +117,7 @@ for x in range(0,coeff2):
         #newColor =(int(compteur[0]/(2500)),int(compteur[1]/(2500)),int(compteur[2]/(2500)))
         #newColor2=findMostCommon(compteur2)
         newColor3 = findMostCommon(compteur3)
+        newColor3 = tuple(map(lambda x:int(x/30)*30,newColor3))
         newColorMatrix[x][y] = newColor3
         for i in range(0+coeff1*x,coeff1+coeff1*x):
             for j in range(0+coeff1*y,coeff1+coeff1*y):
@@ -90,13 +140,16 @@ print(' '*20,'Finished',' '*20)
 #increment1 = (0,64)
 #increment2 = (64,0)
 #xy2= xy
-points = im.size[1]/coeff2
+points = int(im.size[1]/coeff2)
 draw = ImageDraw.Draw(im)
 
 drawGrid(draw,points,coeff2)
 #drawRectangles(draw,points,coeff2)
-#undrawGrid(draw,points,coeff2,newColorMatrix)
+#print(newColorMatrix)
+#print(newColorMatrix[1][1][1])
+undrawGrid(draw,points,coeff2,newColorMatrix)
+removeDots(im,points,coeff2,newColorMatrix)
 
 im.show()
-im.save("output.png")
+im.save(filename[0:filename.index(".")]+"_output.png")
 #print(newColorMatrix)

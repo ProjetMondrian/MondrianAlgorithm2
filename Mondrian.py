@@ -5,11 +5,10 @@ from PIL import  Image, ImageDraw
 
 ## Choose one from the list of available filenames:
 #filename = "bwlena.jpg"
-#filename = "falcone.jpg"
 #filename = "k.jpg"
-filename = "lena.jpg"
-#filename = "resized_falcone.jpg"
+#filename = "lena.jpg"
 #filename = "white_background_input.jpg"
+filename = "women.jpg"
 
 im = Image.open(filename)
 
@@ -117,7 +116,7 @@ for x in range(0,coeff2):
         #newColor =(int(compteur[0]/(2500)),int(compteur[1]/(2500)),int(compteur[2]/(2500)))
         #newColor2=findMostCommon(compteur2)
         newColor3 = findMostCommon(compteur3)
-        newColor3 = tuple(map(lambda x:int(x/30)*30,newColor3))
+        newColor3 = tuple(map(lambda x:int(x/10)*10,newColor3))
         newColorMatrix[x][y] = newColor3
         for i in range(0+coeff1*x,coeff1+coeff1*x):
             for j in range(0+coeff1*y,coeff1+coeff1*y):

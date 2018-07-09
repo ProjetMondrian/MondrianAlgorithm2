@@ -8,8 +8,6 @@ Once that is done for all the regions then the ones that are the same color are 
 
 This is not quite the split and merge algorithm that was disussed because for now the splitting is not a recursion based on a homogeneity criterion, instead we simply choose the number of regions the image is split into. It is not meant to stay this  way, the purpose was just to work on the merging part first without spending too much time figuring out the splitting in order to get more representative results and get a better idea of how the algorithm should be adapted to achieve our goals.
 
-The merging does not yet work as intended, so for now all there is to show is the result of the splitting.
-
 Now back to the mean or median problem, the advantage of the mean is that it can be calculated in linear time whereas here the median is is calculated in n² because the color of a pixel is a triplet so there is no obvious way to turn them into a sorted list. However using the mean creates colors that didn't exist in the original image which goes against Mondrian's technique of using very few different colors. Also using the mean does not look good at all for images with few different colors to start with.
 
 Tasks left to do: 
@@ -47,3 +45,11 @@ Result :
 With merging but also with non-rectangular shapes (for now):
 
 ![alt text](https://github.com/ProjetMondrian/MondrianAlgorithm2/blob/master/white_background_merged_output.png)
+
+Using one of David's examples :
+
+![alt text](https://github.com/ProjetMondrian/MondrianAlgorithm2/blob/master/women.jpg)
+
+Result : 
+
+![alt text](https://github.com/ProjetMondrian/MondrianAlgorithm2/blob/master/women_output.png)

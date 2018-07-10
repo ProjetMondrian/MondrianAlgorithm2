@@ -11,10 +11,9 @@ This is not quite the split and merge algorithm that was disussed because for no
 Now back to the mean or median problem, the advantage of the mean is that it can be calculated in linear time whereas here the median is is calculated in n² because the color of a pixel is a triplet so there is no obvious way to turn them into a sorted list. However using the mean creates colors that didn't exist in the original image which goes against Mondrian's technique of using very few different colors. Also using the mean does not look good at all for images with few different colors to start with.
 
 Tasks left to do: 
-- Fix merge algorithm
+- Fix merge algorithm (so that every region is rectangular)
 - Possibly change split algorithm once the above is done
 - Optimise the way the median is calculated
-- Make the program work for all image sizes
 
 
 ## Some examples : 

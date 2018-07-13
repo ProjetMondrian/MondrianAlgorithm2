@@ -4,7 +4,9 @@ import time
 from PIL import  Image, ImageDraw
 
 ## Choose one from the list of available filenames:
+#filename = "building.jpg"
 #filename = "bwlena.jpg"
+#filename = "duck.jpg"
 #filename = "k.jpg"
 #filename = "lena.jpg"
 #filename = "white_background_input.jpg"
@@ -12,11 +14,19 @@ filename = "women.jpg"
 
 im = Image.open(filename)
 
+## All RGB values will be  multiples of this factor, the bigger it is the fewer different colors there will be.
+normalizationFactor = 10
+
+## When merging, RGB values are considered equal if they have the same quotient when divided by this value, the bigger it is the bigger the merged regions will be. This value is irrelevent if smaller than the normalization factor.
+comparisonFactor = 10
+
+## The input image will be resized to the given size, which will also be the size of the output.
 desiredSize = (512, 512)
 if (im.size != desiredSize):
     im = im.resize(desiredSize)
 #im.save("resized_input.jpg")
 
+## Contains the RGB values of each pixel in the resized input image.
 px = im.load()
 
 
@@ -30,16 +40,16 @@ def drawGrid(draw,points,coeff2):
 
 def undrawGrid(draw,points,coeff2,newColorMatrix):
     for j in range(0,coeff2-1):
-        if (tuple(map(lambda x:int(x/10),newColorMatrix[0][j])) == tuple(map(lambda x:int(x/10),newColorMatrix[0][j+1]))):
+        if (tuple(map(lambda x:int(x/comparisonFactor),newColorMatrix[0][j])) == tuple(map(lambda x:int(x/comparisonFactor),newColorMatrix[0][j+1]))):
             draw.line((points*0+2, points*(j+1), points*(0+1)-2, points*(j+1)), fill=newColorMatrix[0][j], width=3)
     for i in range(0,coeff2-1):
-        if (tuple(map(lambda x:int(x/10),newColorMatrix[i][0])) == tuple(map(lambda x:int(x/10),newColorMatrix[i+1][0]))):
+        if (tuple(map(lambda x:int(x/comparisonFactor),newColorMatrix[i][0])) == tuple(map(lambda x:int(x/comparisonFactor),newColorMatrix[i+1][0]))):
             draw.line((points*(i+1), points*0, points*(i+1), points*1-2), fill=newColorMatrix[i][0], width=3)
     for i in range(1,coeff2):
         for j in range(1,coeff2):
-            if (tuple(map(lambda x:int(x/10),newColorMatrix[i][j])) == tuple(map(lambda x:int(x/10),newColorMatrix[i][j-1]))):
+            if (tuple(map(lambda x:int(x/comparisonFactor),newColorMatrix[i][j])) == tuple(map(lambda x:int(x/comparisonFactor),newColorMatrix[i][j-1]))):
                 draw.line((points*i+2, points*j, points*(i+1)-2, points*j), fill=newColorMatrix[i][j], width=3)
-            if (tuple(map(lambda x:int(x/10),newColorMatrix[i][j])) == tuple(map(lambda x:int(x/10),newColorMatrix[i-1][j]))):
+            if (tuple(map(lambda x:int(x/comparisonFactor),newColorMatrix[i][j])) == tuple(map(lambda x:int(x/comparisonFactor),newColorMatrix[i-1][j]))):
                 draw.line((points*i, points*j+2, points*i, points*(j+1)-2), fill=newColorMatrix[i][j], width=3)
 
 def drawRectangles(draw,points,coeff2):
@@ -86,16 +96,17 @@ def findMostCommon(L):
 def normalizeColors(newColorMatrix):
     for i in range(0,coeff2):
         for j in range(0,coeff2):
-            newColorMatrix[i][j] = tuple(map(lambda x:int(x/10)*10,newColorMatrix[i][j]))
+            newColorMatrix[i][j] = tuple(map(lambda x:int(x/normalizationFactor)*normalizationFactor,newColorMatrix[i][j]))
 
 
-## For now the program only uses 512 by 512 pixels images for simplicity, will work for all images later
+## For now the program only uses 512 by 512 pixels images for simplicity
 ## The image is divided in 16x16 squares of 32x32 pixels each
 coeff1 = 32
 coeff2 = 16
 
 progress = 0
 
+## Initiates a matrix to hold the RGB values of each region in the split image.
 newColorMatrix = [0] * coeff2
 for i in range(coeff2):
     newColorMatrix[i] = [0] * coeff2
@@ -116,13 +127,13 @@ for x in range(0,coeff2):
         #newColor =(int(compteur[0]/(2500)),int(compteur[1]/(2500)),int(compteur[2]/(2500)))
         #newColor2=findMostCommon(compteur2)
         newColor3 = findMostCommon(compteur3)
-        newColor3 = tuple(map(lambda x:int(x/10)*10,newColor3))
+        newColor3 = tuple(map(lambda x:int(x/normalizationFactor)*normalizationFactor,newColor3))
         newColorMatrix[x][y] = newColor3
         for i in range(0+coeff1*x,coeff1+coeff1*x):
             for j in range(0+coeff1*y,coeff1+coeff1*y):
                 px[i,j]=newColor3
 
-## The program can take some time to run for larger images so these few lines just print the progress to give an idea of how long it will take
+## The program can take some time to run for larger images so these few lines just print the progress to give an idea of how long it will take to run.
         if(x==0 and y==0):
             time2 = time.clock()
             timeRemaining = (time2-time1)*255+1.5
@@ -138,17 +149,12 @@ print(' '*20,'Finished',' '*20)
 #xy = [(0,0),(64,64)]
 #increment1 = (0,64)
 #increment2 = (64,0)
-#xy2= xy
 points = int(im.size[1]/coeff2)
 draw = ImageDraw.Draw(im)
 
 drawGrid(draw,points,coeff2)
-#drawRectangles(draw,points,coeff2)
-#print(newColorMatrix)
-#print(newColorMatrix[1][1][1])
 undrawGrid(draw,points,coeff2,newColorMatrix)
 removeDots(im,points,coeff2,newColorMatrix)
 
 im.show()
 im.save(filename[0:filename.index(".")]+"_output.png")
-#print(newColorMatrix)

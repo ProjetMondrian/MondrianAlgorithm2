@@ -10,10 +10,11 @@ This is not quite the split and merge algorithm that was disussed because for no
 
 Now back to the mean or median problem, the advantage of the mean is that it can be calculated in linear time whereas here the median is is calculated in n² because the color of a pixel is a triplet so there is no obvious way to turn them into a sorted list. However using the mean creates colors that didn't exist in the original image which goes against Mondrian's technique of using very few different colors. Also using the mean does not look good at all for images with few different colors to start with.
 
-Tasks left to do: 
-- Fix merge algorithm (so that every region is rectangular)
-- Possibly change split algorithm once the above is done
-- Optimise the way the median is calculated
+Possible improvements:
+
+-Integrate some contour recognition into the split algorithm to split the image into smaller squares where there is a contour in order to obtai a greater level of detail.
+
+-Some shapes that we obtain are not rectangular, could implement a function that draws the missing lines in order to only have rectangles of the same color.
 
 
 ## Some examples : 
@@ -52,3 +53,11 @@ Using one of David's examples :
 Result : 
 
 ![alt text](https://github.com/ProjetMondrian/MondrianAlgorithm2/blob/master/women_output.png)
+
+It is also possible to use only the 5 colors Mondrian is known for (red, yellow, blue, black and white), which for the same image produces the following result:
+
+![alt text](https://github.com/ProjetMondrian/MondrianAlgorithm2/blob/master/women_output2.png)
+
+This technique can be interesting for some images but for others it does not work well at all so if we do not control the input it is safer to use the previous technique.
+
+Also this is where it could be interesting to have a method that draws lines within a region of the same color in order to create only rectangular shapes.

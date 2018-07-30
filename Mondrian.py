@@ -7,26 +7,33 @@ from PIL import  Image, ImageDraw
 ## Choose one from the list of available filenames:
 #filename = "building.jpg"
 #filename = "bwlena.jpg"
-filename = "duck.jpg"
+#filename = "duck.jpg"
 #filename = "k.jpg"
 #filename = "obama.jpg"
 #filename = "lena.jpg"
 #filename = "white_background_input.jpg"
-#filename = "women.jpg"
+filename = "women.jpg"
 
 showOutput = True
 saveOutput = False
-useOnlyMondrianColors = True
+printTimeInfo = True
+useOnlyMondrianColors = False
 compareUsingEuclidianDistance = True
 
 im = Image.open(filename)
 
-## All RGB values in the output will be  multiples of this factor, the bigger it is the fewer different colors there will be. A much more complex normalization function is defined further below but this just explains how the normalization factor is used (if used at all).
+
+## All RGB values in the output will be  multiples of this factor, the bigger it is the fewer different colors there will be.
+## A much more complex normalization function is defined further below.
+## This just explains how the normalization factor is used (if used at all).
 normalizationFactor = 10
 normalizationFunction = lambda x: int(x/normalizationFactor)*normalizationFactor
 
-## The following function decides (with a certain tolerance) if two colors are to be considered the same for the merging process. The most logical way to compare triplets is to calculate the euclidian distance between the two but a second method is also available, which works similarly to the normalization function and can produce interesting alternative results but in general the euclidian distance method should be preferred.
-comparisonTolerance = 50
+
+## The following function decides (with a certain tolerance) if two colors are to be considered the same for the merging process.
+## The most logical way to compare triplets is to calculate the euclidian distance between the two.
+## A second method is also available which works similarly to the normalization function and can produce interesting alternative results but in general the euclidian distance method should be preferred.
+comparisonTolerance = 100
 def comparisonFunction(tuple1,tuple2):
     if compareUsingEuclidianDistance:
         return euclidianDistance(tuple1,tuple2) <= comparisonTolerance
@@ -56,7 +63,9 @@ def drawGrid(draw,points,coeff2):
     return
 
 def undrawGrid(draw,points,coeff2,newColorMatrix):
-    ## This is the merge function, if two neighboring regions are considered to be the same color by the comparison function then this function replaces the black line between them by a line of their color (making it invisible).
+    """Erase black lines between squares of the same color."""
+    ## This is the merge function.
+    ## If two neighboring regions are considered to be the same color by the comparison function then this function replaces the black line between them by a line of their color (making it invisible).
     for j in range(0,coeff2-1):
         if comparisonFunction(newColorMatrix[0][j],newColorMatrix[0][j+1]):
             draw.line((points*0+2, points*(j+1), points*(0+1)-2, points*(j+1)), fill=newColorMatrix[0][j], width=3)
@@ -85,7 +94,7 @@ def drawRectangles(draw,points,coeff2):
         xy2[1] = tuple(map(sum,zip(xy2[1],increment2)))
 
 def removeDots(image,points,coeff2,newColorMatrix):
-    ## It's necessary to call this funtion after the merge function because it leaves black dots at the intersection of horizontal and vertical black lines it erases, this function paints over those dots.
+    """Paint over dots left behind by the merge function."""
     for i in range(1,coeff2):
         if (px[3,points*i] != (0,0,0)):
             im.putpixel((0,points*i-1),newColorMatrix[0][i-1])
@@ -115,6 +124,13 @@ def findMostCommon(L):
             currentCount = L.count(i)
             mostCommonColor = (i)
     return mostCommonColor
+
+def getColorCount(color,colorlist):
+    count = 0
+    for i in range(0,coeff2):
+        count += colorlist[i].count(color)
+    return count
+
 
 def normalizeColors(color):
     R=color[0]
@@ -156,42 +172,40 @@ def normalizeColors(color):
         else:
             return Black
 
-def recolorRegions(x,y,newColorMatrix):
-    ## If the comparison tolerance is larger than the normalization factor then two regions can be merged even though they do not appear exactly similar. The purpose of this function is that if that happens then the first region's color is assigned to the second region as well so that each merged region will be one single color.
-    if y>0 and comparisonFunction(newColorMatrix[x][y],newColorMatrix[x][y-1]):
-        return newColorMatrix[x][y-1]
+def recolorRegions(x,y,newColorMatrix,newColorList):
+    """Apply the same color to all squares in a merged region."""
+    ## If the comparison tolerance is larger than the normalization factor then two regions can be merged even though they do not appear exactly similar.
+    ## The purpose of this function is that if that happens then the color that appears the most often is assigned to each square in the merged region so that each merged region will be one single color.
 
-    elif x>0 and comparisonFunction(newColorMatrix[x][y],newColorMatrix[x-1][y]):
-        return newColorMatrix[x-1][y]
 
-    elif y<15 and comparisonFunction(newColorMatrix[x][y],newColorMatrix[x][y+1]):
-        return newColorMatrix[x][y+1]
+    ## Remove duplicates from the list of colors, create a second list whose size never changes to iterate over.
+    uniqueNewColorList=list(set(newColorList))
+    uniqueNewColorList2=list(set(newColorList))
+    uniqueNewColorList.sort()
+    uniqueNewColorList2.sort()
 
-    elif x<15 and comparisonFunction(newColorMatrix[x][y],newColorMatrix[x+1][y]):
-        return newColorMatrix[x+1][y]
+    ## If two colors are considered similar enough by the comparison function then the one that appears the least frequently is removed from the list of colors.
+    for i in uniqueNewColorList2:
+        for j in uniqueNewColorList2:
+            if i in uniqueNewColorList and j in uniqueNewColorList:
+                if i!=j and comparisonFunction(i,j):
+                    if getColorCount(i,newColorMatrix) > getColorCount(j,newColorMatrix):
+                        uniqueNewColorList.remove(j)
+                    else:
+                        uniqueNewColorList.remove(i)
 
-    else:
-        return newColorMatrix[x][y]
-
-def recolorRegions2(x,y,newColorMatrix):
-    ## Same purpose as the first recolorRegions function, the two need to be called one after the other.
-    if y>0 and comparisonFunction(newColorMatrix[x][y],newColorMatrix[x][y-1]) and newColorMatrix[x][y]!=newColorMatrix[x][y-1]:
-        return newColorMatrix[x][y-1]
-    
-    elif x>0 and comparisonFunction(newColorMatrix[x][y],newColorMatrix[x-1][y]) and newColorMatrix[x][y]!=newColorMatrix[x-1][y]:
-        return newColorMatrix[x-1][y]
-    
-    elif y<15 and comparisonFunction(newColorMatrix[x][y],newColorMatrix[x][y+1]) and newColorMatrix[x][y]!=newColorMatrix[x][y+1]:
-        return newColorMatrix[x][y+1]
-    
-    elif x<15 and comparisonFunction(newColorMatrix[x][y],newColorMatrix[x+1][y]) and newColorMatrix[x][y]!=newColorMatrix[x+1][y]:
-        return newColorMatrix[x+1][y]
-    
+    ## If the color of the current square unit is not in the reduced unique color list then the function returns whichever color of that list it is closest to.
+    if not newColorMatrix[x][y] in uniqueNewColorList:
+        distance = [0] * len(uniqueNewColorList)
+        for i in range(0,len(uniqueNewColorList)):
+            distance[i] = euclidianDistance(newColorMatrix[x][y],uniqueNewColorList[i])
+        minIndex = distance.index(min(distance))
+        return uniqueNewColorList[minIndex]
     else:
         return newColorMatrix[x][y]
 
 def recolorPixels(x,y,px, newColorMatrix):
-    ## Once the color of a region is calculated, this function applies that color to each pixel in that region.
+    """Apply the right color to each pixel in a square unit."""
     for i in range(0+coeff1*x,coeff1+coeff1*x):
         for j in range(0+coeff1*y,coeff1+coeff1*y):
             px[i,j]=newColorMatrix[x][y]
@@ -208,10 +222,12 @@ progress = 0
 newColorMatrix = [0] * coeff2
 for i in range(coeff2):
     newColorMatrix[i] = [0] * coeff2
+newColorList=[]
 
+startTime = time.clock()
 for x in range(0,coeff2):
     for y in range(0,coeff2):
-        if(x==0 and y==0):
+        if(x==0 and y==0 and printTimeInfo):
             time1 = time.clock()
         compteur = (0,0,0)
         compteur2= [(0,0,0)]
@@ -225,44 +241,61 @@ for x in range(0,coeff2):
         #newColor =(int(compteur[0]/(2500)),int(compteur[1]/(2500)),int(compteur[2]/(2500)))
         #newColor2=findMostCommon(compteur2)
         newColor3 = findMostCommon(compteur3)
-        newColor3 = normalizeColors(newColor3) #tuple(map(normalizationFunction,newColor3))
-            #if (comparisonTolerance > normalizationFactor):
-            # newColor3 = recolorRegions(x,y,newColor3,newColorMatrix)
-        
+        newColor3 = normalizeColors(newColor3)
         newColorMatrix[x][y] = newColor3
-            #for i in range(0+coeff1*x,coeff1+coeff1*x):
-            #for j in range(0+coeff1*y,coeff1+coeff1*y):
-            #px[i,j]=newColor3
+        newColorList += [newColor3,]
 
 ## The program can take some time to run for larger images so these few lines just print the progress to give an idea of how long it will take to run.
-        if(x==0 and y==0):
-            time2 = time.clock()
-            timeRemaining = (time2-time1)*255+1.5
-        else:
-            timeRemaining -= time.clock()-time2
-            time2=time.clock()
-        print(' '*10,'Estimated time remaining:', int(timeRemaining), 'seconds',' '*5, end='\r')
-        progress += 1/2.56
-        print('    '+str(int(progress))+'%'+' '*4, end='\r', flush=True)
+        if printTimeInfo:
+            if(x==0 and y==0):
+                time2 = time.clock()
+                timeRemaining = (time2-time1)*255+1.5
+            else:
+                timeRemaining -= time.clock()-time2
+                time2=time.clock()
+            print(' '*18,'Estimated time remaining:', int(timeRemaining), 'seconds',' '*5, end='\r')
+            progress += 1/2.56
+            print(' Splitting: '+str(int(progress))+'%'+' '*4, end='\r', flush=True)
 
-print(' '*20,'Finished',' '*20)
-
+if printTimeInfo:
+    splittingEndTime = time.clock()
+    print(' Splitting: completed in',splittingEndTime-startTime,'seconds.',' '*15)
+    print(' Merging: ...', end='\r')
 
 points = int(im.size[1]/coeff2)
 draw = ImageDraw.Draw(im)
 
-for z in [0,1,2,3]:
-    for x in range(0,coeff2):
-        for y in range(0,coeff2):
-            if z==0 and not(useOnlyMondrianColors):
-                newColorMatrix[x][y] = recolorRegions(x,y,newColorMatrix)
-            elif not(useOnlyMondrianColors):
-                newColorMatrix[x][y] = recolorRegions2(x,y,newColorMatrix)
-            recolorPixels(x,y,px,newColorMatrix)
+progress = 0
+mergingStartTime = time.clock()
+for x in range(0,coeff2):
+    for y in range(0,coeff2):
+        if(x==0 and y==0 and printTimeInfo):
+            time1 = time.clock()
+        if not(useOnlyMondrianColors):
+            newColorMatrix[x][y] = recolorRegions(x,y,newColorMatrix,newColorList)
+        recolorPixels(x,y,px,newColorMatrix)
+
+        if printTimeInfo:
+            if(x==0 and y==0):
+                time2 = time.clock()
+                timeRemaining = (time2-time1)*255+1.5
+            else:
+                timeRemaining -= time.clock()-time2
+                time2=time.clock()
+            print(' '*18,'Estimated time remaining:', int(timeRemaining), 'seconds',' '*5, end='\r')
+            progress += 1/2.56
+            print(' Merging: '+str(int(progress))+'%'+' '*4, end='\r', flush=True)
+
+if printTimeInfo:
+    mergingEndTime = time.clock()
+    print(' Merging: completed in',mergingEndTime-mergingStartTime,'seconds.',' '*15)
+    print(' Total time:',mergingEndTime-startTime,'seconds.')
 
 drawGrid(draw,points,coeff2)
 undrawGrid(draw,points,coeff2,newColorMatrix)
 removeDots(im,points,coeff2,newColorMatrix)
+
+
 
 if showOutput:
     im.show()

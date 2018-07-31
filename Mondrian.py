@@ -6,7 +6,7 @@ import time
 from PIL import  Image, ImageDraw
 
 
-## Filename can be given as a command line argument or defined here from the list bellow.
+## Filename can be given as a command line argument or defined here from the list below.
 ## If neither of the two is done, the program will ask the user to input a correct filename during the execution.
 try: [filename] = sys.argv[1:]
 except ValueError: pass

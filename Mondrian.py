@@ -1,26 +1,40 @@
 import itertools
 import math
 import operator
+import sys
 import time
 from PIL import  Image, ImageDraw
 
-## Choose one from the list of available filenames:
+
+## Filename can be given as a command line argument or defined here from the list bellow.
+## If neither of the two is done, the program will ask the user to input a correct filename during the execution.
+try: [filename] = sys.argv[1:]
+except ValueError: pass
+
 #filename = "building.jpg"
-#filename = "bwlena.jpg"
+#filename = "bwlena.png"
 #filename = "duck.jpg"
 #filename = "k.jpg"
 #filename = "obama.jpg"
 #filename = "lena.jpg"
 #filename = "white_background_input.jpg"
-filename = "women.jpg"
+#filename = "women.jpg"
 
+## Some options/parameters
 showOutput = True
 saveOutput = False
 printTimeInfo = True
 useOnlyMondrianColors = False
 compareUsingEuclidianDistance = True
+autoAdjustTolerance = True
+desiredNbrOfColors = 5
 
-im = Image.open(filename)
+while True:
+    try:
+        im = Image.open(filename)
+        break
+    except (NameError,FileNotFoundError,AttributeError):
+        filename = input('Missing or incorrect file name, try again: ')
 
 
 ## All RGB values in the output will be  multiples of this factor, the bigger it is the fewer different colors there will be.
@@ -33,7 +47,11 @@ normalizationFunction = lambda x: int(x/normalizationFactor)*normalizationFactor
 ## The following function decides (with a certain tolerance) if two colors are to be considered the same for the merging process.
 ## The most logical way to compare triplets is to calculate the euclidian distance between the two.
 ## A second method is also available which works similarly to the normalization function and can produce interesting alternative results but in general the euclidian distance method should be preferred.
-comparisonTolerance = 100
+if not autoAdjustTolerance:
+    comparisonTolerance = 10
+else:
+    comparisonTolerance = normalizationFactor
+
 def comparisonFunction(tuple1,tuple2):
     if compareUsingEuclidianDistance:
         return euclidianDistance(tuple1,tuple2) <= comparisonTolerance
@@ -118,10 +136,6 @@ def removeDots(image,points,coeff2,newColorMatrix):
                 im.putpixel((points*i+1,points*j+1),newColorMatrix[i][j])
 
 def findMostCommon(L):
-
-    #return max(set(L), key = L.count)
-
-    #"""
     currentCount = 0
     L2=list(set(L))
     L2.sort()
@@ -130,7 +144,9 @@ def findMostCommon(L):
             currentCount = L.count(i)
             mostCommonColor = i
     return mostCommonColor
-    #"""
+    ## Alternatively if being concise is an issue, could also just do: return max(set(L), key = L.count)
+    ## But performances are fairly identical for the two and the longer version gives more control in terms of handling cases where the given list has two modes and not a unique one.
+
 
 def getColorCount(color,colorlist):
     count = 0
@@ -216,6 +232,17 @@ def recolorRegions(x,y,newColorMatrix,finalColorList):
     else:
         return newColorMatrix[x][y]
 
+def adjustTolerance(desiredNbrOfColors,newColorList):
+    """Increment the comparison tolerance until the final color list contains as many colors as desired."""
+    global comparisonTolerance
+    L = getFinalColorList(newColorList)
+    while len(L) > desiredNbrOfColors:
+        comparisonTolerance += 10
+        L = getFinalColorList(newColorList)
+    while len(L) < desiredNbrOfColors:
+        comparisonTolerance -= 1
+        L = getFinalColorList(newColorList)
+
 def recolorPixels(x,y,px, newColorMatrix):
     """Apply the right color to each pixel in a square unit."""
     for i in range(0+coeff1*x,coeff1+coeff1*x):
@@ -230,7 +257,7 @@ coeff2 = 16
 
 progress = 0
 
-## Initiates a matrix to hold the RGB values of each region in the split image.
+## Initiates a list of lists which acts as an array to hold the RGB values of each region in the split image.
 newColorMatrix = [0] * coeff2
 for i in range(coeff2):
     newColorMatrix[i] = [0] * coeff2
@@ -241,8 +268,8 @@ for x in range(0,coeff2):
     for y in range(0,coeff2):
         if(x==0 and y==0 and printTimeInfo):
             time1 = time.clock()
-        compteur = (0,0,0)
-        compteur2= [(0,0,0)]
+        #compteur = (0,0,0)
+        #compteur2= [(0,0,0)]
         compteur3= ((0,0,0),)
         for i in range(0+coeff1*x,coeff1+coeff1*x):
             for j in range(0+coeff1*y,coeff1+coeff1*y):
@@ -257,7 +284,7 @@ for x in range(0,coeff2):
         newColorMatrix[x][y] = newColor3
         newColorList += [newColor3,]
 
-## The program can take some time to run for larger images so these few lines just print the progress to give an idea of how long it will take to run.
+        ## The program can take some time to run for larger images so these few lines just print the progress to give an idea of how long it will take to run.
         if printTimeInfo:
             if(x==0 and y==0):
                 time2 = time.clock()
@@ -277,10 +304,12 @@ if printTimeInfo:
 points = int(im.size[1]/coeff2)
 draw = ImageDraw.Draw(im)
 
+mergingStartTime = time.clock()
+
+if autoAdjustTolerance: adjustTolerance(desiredNbrOfColors,newColorList)
 finalColorList = getFinalColorList(newColorList)
 
 progress = 0
-mergingStartTime = time.clock()
 for x in range(0,coeff2):
     for y in range(0,coeff2):
         if(x==0 and y==0 and printTimeInfo):

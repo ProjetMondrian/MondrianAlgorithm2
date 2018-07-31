@@ -118,12 +118,19 @@ def removeDots(image,points,coeff2,newColorMatrix):
                 im.putpixel((points*i+1,points*j+1),newColorMatrix[i][j])
 
 def findMostCommon(L):
+
+    #return max(set(L), key = L.count)
+
+    #"""
     currentCount = 0
-    for i in L:
+    L2=list(set(L))
+    L2.sort()
+    for i in L2:
         if (currentCount < L.count(i)):
             currentCount = L.count(i)
-            mostCommonColor = (i)
+            mostCommonColor = i
     return mostCommonColor
+    #"""
 
 def getColorCount(color,colorlist):
     count = 0
@@ -172,12 +179,8 @@ def normalizeColors(color):
         else:
             return Black
 
-def recolorRegions(x,y,newColorMatrix,newColorList):
-    """Apply the same color to all squares in a merged region."""
-    ## If the comparison tolerance is larger than the normalization factor then two regions can be merged even though they do not appear exactly similar.
-    ## The purpose of this function is that if that happens then the color that appears the most often is assigned to each square in the merged region so that each merged region will be one single color.
-
-
+def getFinalColorList(newColorList):
+    """Return a list not containing colors that appear rarely and are barely different from more frequent similar colors."""
     ## Remove duplicates from the list of colors, create a second list whose size never changes to iterate over.
     uniqueNewColorList=list(set(newColorList))
     uniqueNewColorList2=list(set(newColorList))
@@ -193,14 +196,23 @@ def recolorRegions(x,y,newColorMatrix,newColorList):
                         uniqueNewColorList.remove(j)
                     else:
                         uniqueNewColorList.remove(i)
+    return uniqueNewColorList
+
+def recolorRegions(x,y,newColorMatrix,finalColorList):
+    """Apply the same color to all squares in a merged region."""
+    ## If the comparison tolerance is larger than the normalization factor then two regions can be merged even though they do not appear exactly similar.
+    ## The purpose of this function is that if that happens then the color that appears the most often is assigned to each square in the merged region so that each merged region will be one single color.
+
+
+
 
     ## If the color of the current square unit is not in the reduced unique color list then the function returns whichever color of that list it is closest to.
-    if not newColorMatrix[x][y] in uniqueNewColorList:
-        distance = [0] * len(uniqueNewColorList)
-        for i in range(0,len(uniqueNewColorList)):
-            distance[i] = euclidianDistance(newColorMatrix[x][y],uniqueNewColorList[i])
+    if not newColorMatrix[x][y] in finalColorList:
+        distance = [0] * len(finalColorList)
+        for i in range(0,len(finalColorList)):
+            distance[i] = euclidianDistance(newColorMatrix[x][y],finalColorList[i])
         minIndex = distance.index(min(distance))
-        return uniqueNewColorList[minIndex]
+        return finalColorList[minIndex]
     else:
         return newColorMatrix[x][y]
 
@@ -265,6 +277,8 @@ if printTimeInfo:
 points = int(im.size[1]/coeff2)
 draw = ImageDraw.Draw(im)
 
+finalColorList = getFinalColorList(newColorList)
+
 progress = 0
 mergingStartTime = time.clock()
 for x in range(0,coeff2):
@@ -272,7 +286,7 @@ for x in range(0,coeff2):
         if(x==0 and y==0 and printTimeInfo):
             time1 = time.clock()
         if not(useOnlyMondrianColors):
-            newColorMatrix[x][y] = recolorRegions(x,y,newColorMatrix,newColorList)
+            newColorMatrix[x][y] = recolorRegions(x,y,newColorMatrix,finalColorList)
         recolorPixels(x,y,px,newColorMatrix)
 
         if printTimeInfo:
@@ -286,16 +300,14 @@ for x in range(0,coeff2):
             progress += 1/2.56
             print(' Merging: '+str(int(progress))+'%'+' '*4, end='\r', flush=True)
 
-if printTimeInfo:
-    mergingEndTime = time.clock()
-    print(' Merging: completed in',mergingEndTime-mergingStartTime,'seconds.',' '*15)
-    print(' Total time:',mergingEndTime-startTime,'seconds.')
-
 drawGrid(draw,points,coeff2)
 undrawGrid(draw,points,coeff2,newColorMatrix)
 removeDots(im,points,coeff2,newColorMatrix)
 
-
+if printTimeInfo:
+    mergingEndTime = time.clock()
+    print(' Merging: completed in',mergingEndTime-mergingStartTime,'seconds.',' '*15)
+    print(' Total time:',mergingEndTime-startTime,'seconds.')
 
 if showOutput:
     im.show()

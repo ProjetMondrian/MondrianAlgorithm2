@@ -15,7 +15,7 @@ Result :
 ![alt text](https://github.com/ProjetMondrian/MondrianAlgorithm2/blob/master/firstPicture_output.png)
 
 
-The program can also use A. Geitgey's facial recognition library (https://github.com/ageitgey/face_recognition) to identify the eyes and mouth which will then be made more visible in the output. If that library is not installed the program will still run without using it but here is an example to illustrate the need for it when using the program on a close-up of a face:
+The program can also use A. Geitgey's facial recognition library (https://github.com/ageitgey/face_recognition) to identify the eyes and mouth which will then be made more visible in the output. If that library is not installed the program will still run without using it but here is an example to illustrate its relevance when using the program on a close-up of a face:
 
 Original Image :
 
